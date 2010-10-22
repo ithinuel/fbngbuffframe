@@ -3,7 +3,7 @@ if not L then return end
 
 L["Afficher l'interface de Blizzard"] = true;
 L["Buffs"] = true;
-L["Montrer / Cacher l'encre"] = true;
+L["Montrer / Cacher l'ancre"] = true;
 L["Nombre de buff par ligne"] = true;
 L["Nombre maximal de buff a afficher"] = true;
 L["Parametre d'affichage"] = true;

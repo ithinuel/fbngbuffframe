@@ -58,7 +58,7 @@ local MenuOptions = {
 			set = "BuffOptionsSet",
 			args = {
 				show_anchor = {
-					name = L["Montrer / Cacher l'encre"],
+					name = L["Montrer / Cacher l'ancre"],
 					type = "execute",
 					order = 0,
 					func = "ToggleAnchor",
@@ -145,6 +145,7 @@ end
 function mod:OptionsSet(info, value)
 	self.db.profile[info[#info]] = value
 	self:UpdateConf()
+	self:ArrangeBuffs()
 end
 
 function mod:BuffOptionsGet(info)
@@ -174,7 +175,6 @@ function mod:UpdateConf()
             --TemporaryEnchantFrame:Hide()
             BuffFrame:UnregisterEvent("UNIT_AURA")
         end
-	self:ArrangeBuffs()
 end
 
 function mod:CommandParser()
