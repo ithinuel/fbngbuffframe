@@ -1,4 +1,4 @@
--- A small (but complete) addon, that doesn't do anything.
+ï»¿-- A small (but complete) addon, that doesn't do anything.
 local mod = LibStub("AceAddon-3.0"):NewAddon("fbngBuffFrame", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("fbngBuffFrame");
 
@@ -7,10 +7,10 @@ fbngBuffFrame = mod
 -- creer 3 frames :
 -- 1 pour les buffs
 -- 1 pour les debuffs
--- 1 pour les enchant d'armes (à voir pe dans les buffs)
+-- 1 pour les enchant d'armes (Ã  voir pe dans les buffs)
 
--- 1 frame : y lignes de x éléments
--- 1 élément : cadre
+-- 1 frame : y lignes de x Ã©lÃ©ments
+-- 1 Ã©lÃ©ment : cadre
 --	barre verticale "jauge" du temps
 --	icon du buff/debuff
 --	text : nb stack
@@ -22,24 +22,42 @@ local defaults = {
 		buffs = {
 			n_by_row = 10,
 			max_display = BUFF_MAX_DISPLAY,
-			icon_size = 20,
+			
 			status_bar_width = 3,
+			icon_size = 20,
 			count_size = 13,
-			padding = 3,
 			timer_size = 10,
-			pos_x = 0,
-			pos_y = 0,
+			padding = 3,
+			
+			colors = {
+				high = { r = 0, g = 1, b = 0, a = 1 },
+				med  = { r = 1, g = 1, b = 0, a = 1 },
+				low  = { r = 1, g = 0, b = 0, a = 1 },
+			},
+			pos_x = UIParent:GetWidth()/2,
+			pos_y = UIParent:GetHeight()/2,
+			
+			show_anchor = false,
 		},
 		debuffs = {
 			n_by_row = 10,
 			max_display = DEBUFF_MAX_DISPLAY,
-			icon_size = 20,
+			
 			status_bar_width = 3,
+			icon_size = 20,
 			count_size = 13,
-			padding = 3,
 			timer_size = 10,
-			pos_x = 0,
-			pos_y = 0,
+			padding = 3,
+			
+			colors = {
+				high = { r = 1, g = 0, b = 0, a = 1 },
+				med  = { r = 1, g = 1, b = 0, a = 1 },
+				low  = { r = 0, g = 1, b = 0, a = 1 },
+			},
+			pos_x = UIParent:GetWidth()/2,
+			pos_y = UIParent:GetHeight()/2,
+			
+			show_anchor = false,
 		},
 	}
 }
@@ -56,94 +74,32 @@ local MenuOptions = {
 			type = "toggle",
 			order = 0,
 		},
-		
-		buffs = {
-			name = L["Buffs"],
-			type = "group",
-			order = 1,
-			handler = mod,
-			get = "BuffOptionsGet",
-			set = "BuffOptionsSet",
-			args = {
-				show_anchor = {
-					name = L["Montrer / Cacher l'ancre"],
-					type = "execute",
-					order = 0,
-					func = "ToggleAnchor",
-				},
-				n_by_row = {
-					name = L["Nombre de buff par ligne"],
-					type = "range",
-					order = 1,
-					min = 1,
-					max = 40,
-					step = 1,
-				},
-				max_display = {
-					name = L["Nombre maximal de buff a afficher"],
-					type = "range",
-					order = 2,
-					min = 1,
-					max = 40,
-					step = 1,
-				},
-				buffs_display = {
-					name = L["Parametre d'affichage"],
-					type = "group",
-					order = 3,
-					inline = true,
-					args = {
-						icon_size = {
-							name = L["Taille de l'icone"],
-							type = "input",
-							order = 0,
-						},
-						status_bar_width = {
-							name = L["Largeur du sablier"],
-							type = "input",
-							order = 1,
-						},
-						count_size = {
-							name = L["Taille du compteur de pile"],
-							type = "input",
-							order = 2,
-						},
-						timer_size = {
-							name = L["Taille du temps restant"],
-							type = "input",
-							order = 3,
-						},
-						padding = {
-							name = L["Espacement entre les elements"],
-							type = "input",
-							order = 4,
-						},
-					}
-				},
-			},
-		},
 	},
 }
 
 local DebuffTypeColor = { };
-DebuffTypeColor["none"]		= { r = 0.80, g = 0, b = 0 };
-DebuffTypeColor["Magic"]	= { r = 0.20, g = 0.60, b = 1.00 };
-DebuffTypeColor["Curse"]	= { r = 0.60, g = 0.00, b = 1.00 };
-DebuffTypeColor["Disease"]	= { r = 0.60, g = 0.40, b = 0 };
-DebuffTypeColor["Poison"]	= { r = 0.00, g = 0.60, b = 0 };
+DebuffTypeColor["none"]		= { r = 0, g = 0, b = 0, a = 0.7 };
+DebuffTypeColor["Magic"]	= { r = 0.20, g = 0.60, b = 1.00, a = 1 };
+DebuffTypeColor["Curse"]	= { r = 0.60, g = 0.00, b = 1.00, a = 1 };
+DebuffTypeColor["Disease"]	= { r = 0.60, g = 0.40, b = 0, a = 1 };
+DebuffTypeColor["Poison"]	= { r = 0.00, g = 0.60, b = 0, a = 1 };
 DebuffTypeColor[""]		= DebuffTypeColor["none"];
 
-mod.buff_anchor = nil
+mod.buffs_anchor = nil
 mod.buffs = {}
-mod.debuff_anchor = nil
+mod.debuffs_anchor = nil
 mod.debuffs = {}
 mod.wench_frame = nil
+mod.do_hide = true
 
 function mod:OnInitialize()
 	-- do init tasks here, like loading the Saved Variables, 
 	-- or setting up slash commands.
 	self:Print("mod:OnInitialise")
 	self:RegisterChatCommand("fbf", "CommandParser")
+	
+	MenuOptions.args["buffs"] = self:GetBarOptions(L["buffs"])
+	MenuOptions.args["debuffs"] = self:GetBarOptions(L["debuffs"])
 	
 	self.db = LibStub("AceDB-3.0"):New("fBFDB", defaults, true)
   	MenuOptions.args.Profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db);
@@ -161,32 +117,142 @@ end
 function mod:OptionsSet(info, value)
 	self.db.profile[info[#info]] = value
 	self:UpdateConf()
-	self:ArrangeBuffs()
+end
+
+function mod:ColorGetter (info)
+	local bar = self.db.profile[info[1]]
+	local r = bar.colors[info[#info]].r
+	local g = bar.colors[info[#info]].g
+	local b = bar.colors[info[#info]].b
+	local a = bar.colors[info[#info]].a
+	return r, g, b, a
+end
+function mod:ColorSetter (info, r, g, b, a) 
+	local bar = self.db.profile[info[1]]
+	bar.colors[info[#info]].r = r
+	bar.colors[info[#info]].g = g
+	bar.colors[info[#info]].b = b
+	bar.colors[info[#info]].a = a
 end
 
 function mod:BuffOptionsGet(info)
-	return self.db.profile.buffs[info[#info]]
+	return self.db.profile[info[1]][info[#info]]
 end
 function mod:BuffOptionsSet(info, value)
-	self.db.profile.buffs[info[#info]] = value
-	self:ArrangeBuffs()
+	self.db.profile[info[1]][info[#info]] = value
+	self:ArrangeBuffs(info[1])
+end
+
+function mod:GetBarOptions(bar_name)
+	local barOpts = {
+		name = bar_name,
+		type = "group",
+		order = 1,
+		get = "BuffOptionsGet",
+		set = "BuffOptionsSet",
+		args = {
+			show_anchor = {
+				name = L["Montrer / Cacher l'ancre"],
+				type = "execute",
+				order = 0,
+				func = "ToggleAnchor",
+			},
+			n_by_row = {
+				name = L["Nombre de buff par ligne"],
+				type = "range",
+				order = 1,
+				min = 1,
+				max = 40,
+				step = 1,
+			},
+			max_display = {
+				name = L["Nombre maximal de buff a afficher"],
+				type = "range",
+				order = 2,
+				min = 1,
+				max = 40,
+				step = 1,
+			},
+			buffs_display = {
+				name = L["Parametre d'affichage"],
+				type = "group",
+				order = 3,
+				inline = true,
+				args = {
+					icon_size = {
+						name = L["Taille de l'icone"],
+						type = "input",
+						order = 0,
+					},
+					status_bar_width = {
+						name = L["Largeur du sablier"],
+						type = "input",
+						order = 1,
+					},
+					count_size = {
+						name = L["Taille du compteur de pile"],
+						type = "input",
+						order = 2,
+					},
+					timer_size = {
+						name = L["Taille du temps restant"],
+						type = "input",
+						order = 3,
+					},
+					padding = {
+						name = L["Espacement entre les elements"],
+						type = "input",
+						order = 4,
+					},
+					colors = {
+						type = 'group',
+						name = L["Temps restant"],
+						order = 5,
+						get = "ColorGetter",
+						set = "ColorSetter",
+						guiInline  = true,
+						args = {
+							high = {
+								type = 'color',
+								name = L["high"],
+								order = 1,
+								hasAlpha = true,
+							},
+							med = {
+								type = 'color',
+								name = L["med"],
+								order = 2,
+								hasAlpha = true,
+							},
+							low = {
+								type = 'color',
+								name = L["low"],
+								order = 3,
+								hasAlpha = true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	return barOpts
 end
 
 function mod:ToggleAnchor(info, value)
-	if self.buff_anchor:IsShown() then
-		mod.buff_anchor:Hide()
-		mod.debuff_anchor:Hide()
+	self.db.profile[info[1]].show_anchor = not self.db.profile[info[1]].show_anchor;
+	if self.db.profile[info[1]].show_anchor then
+		self[info[1] .. "_anchor"]:Show()
 	else
-		self.buff_anchor:Show()
-		self.debuff_anchor:Show()
+		self[info[1] .. "_anchor"]:Hide()
 	end
 end
 
 function mod:UpdateConf()
         if self.db.profile.showblizz then
 		if not BuffFrame:IsShown() then
-			BuffFrame:Show()
 			BuffFrame:RegisterEvent("UNIT_AURA")
+			BuffFrame:Show()
 		end
 	else
             BuffFrame:Hide()
@@ -203,31 +269,28 @@ function mod:OnEnable()
 	-- Do more initialization here, that really enables the use of your addon.
 	-- Register Events, Hook functions, Create Frames, Get information from 
 	-- the game that wasn't available in OnInitialize
-	self.buff_anchor = self:CreateAnchor(self.db.profile.buffs)
-	self.buff_anchor:Hide()
+	self.buffs_anchor = self:CreateAnchor(self.db.profile.buffs)
+	self.buffs_anchor:Hide()
 	--
-	self.debuff_anchor = self:CreateAnchor(self.db.profile.debuffs)
-	self.debuff_anchor:Hide()
+	self.debuffs_anchor = self:CreateAnchor(self.db.profile.debuffs)
+	self.debuffs_anchor:Hide()
 	
 	-- 
-	local prev = self.buff_anchor
 	for i=1, BUFF_MAX_DISPLAY do
 		self.buffs[i] = self:CreateIcon("HELPFUL", i)
 		self.buffs[i]:Show()
-		prev = self.buffs[i]
 	end
 	--
-	prev = self.debuff_anchor
 	for i=1, DEBUFF_MAX_DISPLAY do
 		self.debuffs[i] = self:CreateIcon("HARMFUL", i)
 		self.debuffs[i]:Show()
-		prev = self.debuffs[i]
 	end
 	
-	self:ArrangeBuffs();
+	self:ArrangeBuffs("buffs");
+	self:ArrangeBuffs("debuffs");
 	
 	self.lastTime = GetTime()
-	self.OnUpdateStarted = self:ScheduleRepeatingTimer("OnUpdate", .25, self)
+	self.OnUpdateStarted = self:ScheduleRepeatingTimer("OnUpdate", .125, self)
 	
 	self:RegisterEvent("UNIT_AURA")
 	self:UNIT_AURA(nil, "player")
@@ -271,7 +334,8 @@ function mod:CreateIcon(filter, index)
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", tile = true, tileSize = 0,
 		insets = {left = 0, right = 0, top = 0, bottom = 0},
 	})
-	f:SetBackdropColor(0, 0, 0, 0.7)
+	local color = DebuffTypeColor["none"]
+	f:SetBackdropColor(color.r, color.g, color.b, color.a)
 	
 	-- buff icon
 	f.icon = f:CreateTexture(nil,"ARTWORK")
@@ -304,20 +368,20 @@ function mod:CreateIcon(filter, index)
 	f:SetFrameStrata("HIGH")
 	f:SetFrameLevel(2)
 	
-	f:RegisterForClicks("RightButtonUp")
-	
 	if filter == "HELPFUL" then
+		f:RegisterForClicks("RightButtonUp")
 		-- Setup stuff for clicking off buffs
 		f:SetAttribute("type", "cancelaura" )
 		f:SetAttribute("unit", "player")
-		f:SetAttribute("index", i)
+		f:SetAttribute("index", index)
 	end
 	
 	f.id = index
+	f.filter = filter
 	f:SetScript("OnEnter",function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT");
 		GameTooltip:SetFrameLevel(self:GetFrameLevel() + 2);
-		GameTooltip:SetUnitAura("player", self.id, "HARMFUL");
+		GameTooltip:SetUnitAura("player", self.id, self.filter);
 	end)
 	
 	f:SetScript("OnLeave",function(self)
@@ -331,191 +395,167 @@ function mod:OnUpdate()
 	local elapsed = curTime - self.lastTime
 	self.lastTime = curTime
 	
+	local buf_high = self.db.profile.buffs.colors.high
+	local buf_med = self.db.profile.buffs.colors.med
+	local buf_low = self.db.profile.buffs.colors.low
+	
+	local debuf_high = self.db.profile.debuffs.colors.high
+	local debuf_med = self.db.profile.debuffs.colors.med
+	local debuf_low = self.db.profile.debuffs.colors.low
+	
 	for i = 1, self.db.profile.buffs.max_display do
 		local f = self.buffs[i]
 		if f:GetAlpha() ~= 0 then
-			local name, rank, icon, count, dispelType, duration, expires, caster, isStealable, shouldConsolidate, spellID = UnitAura("player",i,"HELPFUL")
-			if expires and expires ~= 0 then
-				local left = expires-GetTime()
-				if left > 0 then
-					f.bar:SetValue(left)
-					f.timer:SetFormattedText(SecondsToTimeAbbrev(left));
-				else
-					f:SetAlpha(0);
-				end
-			end
-			
-			if count > 1 then
-				f.count:SetText(count)
-			elseif f.count:IsShown() then
-				f.count:Hide()
-			end
+			local name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HELPFUL")
+			self:UpdateButton(f, count, expires, duration, buf_high, buf_med, buf_low)
 		end
 	end
 	for i = 1, DEBUFF_MAX_DISPLAY do
 		local f = self.debuffs[i]
 		if f:GetAlpha() ~= 0 then
-			local name, rank, icon, count, dispelType, duration, expires, caster, isStealable, shouldConsolidate, spellID = UnitAura("player",i,"HARMFUL")
-			if expires and expires ~= 0 then
-				local left = expires-GetTime()
-				if left > 0 then
-					f.bar:SetValue(left)
-					f.timer:SetFormattedText(SecondsToTimeAbbrev(left));
-				else
-					f:SetAlpha(0);
-				end
+			local name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HARMFUL")
+			self:UpdateButton(f, count, expires, duration, debuf_high, debuf_med, debuf_low)
+		end
+	end
+end
+function mod:UpdateButton(f, count, expires, duration, color_high, color_med, color_low)
+	local r, g, b, a
+	if expires and expires ~= 0 then
+		local left = expires-GetTime()
+		if left > 0 then
+			if not f.timer:IsShown() then f.timer:Show() end
+			f.bar:SetValue(left)
+			f.timer:SetFormattedText(SecondsToTimeAbbrev(left));
+			
+			--[[
+			if left > duration/2 => high -> med
+			high * 1-((duration-left)/(duration/2)) + 
+			else med -> low
+			--]]
+			local percent = (left/duration)
+			if percent > .5 then
+				local percent_scaled = (percent - .5) / .5
+				r = (color_high.r * (percent_scaled)) + (color_med.r * (1-percent_scaled))
+				g = (color_high.g * (percent_scaled)) + (color_med.g * (1-percent_scaled))
+				b = (color_high.b * (percent_scaled)) + (color_med.b * (1-percent_scaled))
+				a = (color_high.a * (percent_scaled)) + (color_med.a * (1-percent_scaled))
+			else
+				local percent_scaled = percent / .5
+				r = (color_med.r * (percent_scaled)) + (color_low.r * (1-percent_scaled))
+				g = (color_med.g * (percent_scaled)) + (color_low.g * (1-percent_scaled))
+				b = (color_med.b * (percent_scaled)) + (color_low.b * (1-percent_scaled))
+				a = (color_med.a * (percent_scaled)) + (color_low.a * (1-percent_scaled))
 			end
 			
-			if count > 1 then
-				f.count:SetText(count)
-			elseif f.count:IsShown() then
-				f.count:Hide()
-			end
+			f.bar:SetStatusBarColor(r,g,b, a)
+			f.bar.bg:SetVertexColor(r/2,g/2,b/2, a)
 		end
+	else
+		r = color_low.r
+		g = color_low.g
+		b = color_low.b
+		a = color_low.a
+		f.bar:SetStatusBarColor(r,g,b, a)
+		f.bar.bg:SetVertexColor(r/2,g/2,b/2, a)
+		f.timer:Hide()
+	end
+	
+	if count and count > 1 then
+		if not f.count:IsShown() then f.count:Show() end
+		f.count:SetText(count)
+	elseif f.count:IsShown() then
+		f.count:Hide()
 	end
 end
 
 function mod:UNIT_AURA(event, unit)
 	if unit ~= "player" then return end
-	local name, rank, icon, count, debuffType, duration, expires, caster, isStealable, shouldConsolidate, spellID
+	
+	local name, rank, icon, count, debuffType, duration, expires
 	for i=1, BUFF_MAX_DISPLAY do
 		local f = self.buffs[i]
 		
-		name, rank, icon, count, debuffType, duration, expires, caster, isStealable, shouldConsolidate, spellID = UnitAura("player",i,"HELPFUL")
+		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HELPFUL")
 		if name == nil then
 			f:SetAlpha(0)
 		else
 			f:SetAlpha(1)
 			
-			if duration ~= 0 then
+			if duration and duration ~= 0 then
 				f.bar:SetMinMaxValues(0,duration)
-				f.bar:SetValue(expires-GetTime())
-				f.timer:SetFormattedText(SecondsToTimeAbbrev(expires-GetTime()));
 			else
-				f.bar:SetMinMaxValues(0,1)
 				f.bar:SetValue(0)
-				f.timer:SetText("")
+				f.bar:SetMinMaxValues(0,1)
 			end
 			
-			if count > 1 then
+			if count and count > 1 then
 				f.count:Show()
-				f.count:SetText(count)
-			elseif f.count:IsShown() then
+			else
 				f.count:Hide()
 			end
-			
-			--[[
-			local color
-			if ( debuffType ) then
-				color = DebuffTypeColor[debuffType];
-			else
-				color = DebuffTypeColor["none"];
-			end
-			f:SetBackdropColor(color.r, color.g, color.b, 1)
-			--]]
 			f.icon:SetTexture(icon)
 		end
 	end
 	for i=1, DEBUFF_MAX_DISPLAY do
 		local f = self.debuffs[i]
 		
-		name, rank, icon, count, dispelType, duration, expires, caster, isStealable, shouldConsolidate, spellID = UnitAura("player",i,"HARMFUL")
+		name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HARMFUL")
 		if name == nil then
 			f:SetAlpha(0)
 		else
 			f:SetAlpha(1)
 			
-			if duration ~= 0 then
+			if duration and duration ~= 0 then
 				f.bar:SetMinMaxValues(0,duration)
-				f.bar:SetValue(expires-GetTime())
-				f.timer:SetFormattedText(SecondsToTimeAbbrev(expires-GetTime()));
 			else
-				f.bar:SetMinMaxValues(0,1)
 				f.bar:SetValue(0)
-				f.timer:SetText("")
+				f.bar:SetMinMaxValues(0,1)
 			end
 			
-			if count > 1 then
+			if count and count > 1 then
 				f.count:Show()
-				f.count:SetText(count)
-			elseif f.count:IsShown() then
-				f.count:Hide()
 			end
-			
-			local color
-			if ( debuffType ) then
-				color = DebuffTypeColor[debuffType];
-			else
-				color = DebuffTypeColor["none"];
-			end
-			f:SetBackdropColor(color.r, color.g, color.b, 1)
 			f.icon:SetTexture(icon)
 		end
+	
+		local color
+		if ( debuffType ) then
+			color = DebuffTypeColor[debuffType];
+		else
+			color = DebuffTypeColor["none"];
+		end
+		f:SetBackdropColor(color.r, color.g, color.b, color.a)
 	end
+	self:OnUpdate()
 end
 
-function mod:ArrangeBuffs()
-	local max = self.db.profile.buffs.max_display
+function mod:ArrangeBuffs(bar)
+	local max = self.db.profile[bar].max_display
 
-	local prev = self.buff_anchor
+	local prev = self[bar .. "_anchor"]
 	
-	local n_by_row = self.db.profile.buffs.n_by_row
-	local i_size = self.db.profile.buffs.icon_size
-	local c_size = self.db.profile.buffs.count_size
-	local t_size = self.db.profile.buffs.timer_size
-	local pad = self.db.profile.buffs.padding
-	local sb_width = self.db.profile.buffs.status_bar_width
-	local buff_width = pad + sb_width + pad + i_size + pad
-	local buff_height = pad + i_size + pad
+	local n_by_row = self.db.profile[bar].n_by_row
+	local i_size = self.db.profile[bar].icon_size
+	local c_size = self.db.profile[bar].count_size
+	local t_size = self.db.profile[bar].timer_size
+	local pad = self.db.profile[bar].padding
+	local sb_width = self.db.profile[bar].status_bar_width
+	local bar_width = pad + sb_width + pad + i_size + pad
+	local bar_height = pad + i_size + pad
 	
-	prev:SetWidth(buff_width)
-	prev:SetHeight(buff_height)
+	prev:SetWidth(bar_width)
+	prev:SetHeight(bar_height)
 		
 	for i = 1, max do
-		local b = self.buffs[i]
+		local b = self[bar][i]
 		local step_y = 0
-		local step_x = -buff_width
+		local step_x = -bar_width
 		if (i % n_by_row) == 1 then
-			prev = self.buff_anchor
-			step_y = -(buff_height + pad + t_size + pad)* ((i-1) / n_by_row)
+			prev = self[bar .. "_anchor"]
+			step_y = -(bar_height + pad + t_size + pad)* ((i-1) / n_by_row)
 		end
-		b:SetWidth(buff_width)
-		b:SetHeight(buff_height)
-				
-		b.icon:SetWidth(i_size)
-		b.icon:SetHeight(i_size)
-		b.icon:ClearAllPoints()
-		b.icon:SetPoint("TOP", b, "TOP", 0, -pad)
-		b.icon:SetPoint("RIGHT", b, "RIGHT", -pad, 0)
-		
-		b.count:SetPoint("BOTTOMRIGHT",b.icon,"BOTTOMRIGHT",pad,pad)
-		b.count:SetFont("Fonts\\FRIZQT__.TTF", c_size ,"OUTLINE")
-		
-		b.timer:SetPoint("BOTTOMRIGHT",b,"BOTTOMRIGHT",pad,-(pad+t_size))
-		b.timer:SetFont("Fonts\\FRIZQT__.TTF", t_size ,"OUTLINE")
-		
-		b.bar:SetWidth(sb_width)
-		b.bar:SetHeight(i_size)
-		b.bar:SetPoint("TOPLEFT",b,"TOPLEFT", pad, -pad)
-
-		b:ClearAllPoints()
-		b:SetPoint("TOPLEFT", prev, "TOPLEFT", step_x, step_y)
-		prev = b
-	end
-	
-	prev = self.debuff_anchor
-	prev:SetWidth(buff_width)
-	prev:SetHeight(buff_height)
-	for i = 1, DEBUFF_MAX_DISPLAY do
-		local b = self.debuffs[i]
-		local step_y = 0
-		local step_x = -buff_width
-		if (i % n_by_row) == 1 then
-			prev = self.debuff_anchor
-			step_y = -(buff_height + pad + t_size + pad)* ((i-1) / n_by_row)
-		end
-		b:SetWidth(buff_width)
-		b:SetHeight(buff_height)
+		b:SetWidth(bar_width)
+		b:SetHeight(bar_height)
 				
 		b.icon:SetWidth(i_size)
 		b.icon:SetHeight(i_size)
