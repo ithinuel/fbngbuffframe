@@ -162,7 +162,7 @@ function mod:GetBarOptions(bar_name, bar_max)
 				type = "range",
 				order = 1,
 				min = 1,
-				max = max,
+				max = bar_max,
 				step = 1,
 			},
 			max_display = {
