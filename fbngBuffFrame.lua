@@ -98,8 +98,8 @@ function mod:OnInitialize()
 	self:Print("mod:OnInitialise")
 	self:RegisterChatCommand("fbf", "CommandParser")
 	
-	MenuOptions.args["buffs"] = self:GetBarOptions(L["buffs"])
-	MenuOptions.args["debuffs"] = self:GetBarOptions(L["debuffs"])
+	MenuOptions.args["buffs"] = self:GetBarOptions(L["buffs"], BUFF_MAX_DISPLAY)
+	MenuOptions.args["debuffs"] = self:GetBarOptions(L["debuffs"], DEBUFF_MAX_DISPLAY)
 	
 	self.db = LibStub("AceDB-3.0"):New("fBFDB", defaults, true)
   	MenuOptions.args.Profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db);
@@ -143,7 +143,7 @@ function mod:BuffOptionsSet(info, value)
 	self:ArrangeBuffs(info[1])
 end
 
-function mod:GetBarOptions(bar_name)
+function mod:GetBarOptions(bar_name, bar_max)
 	local barOpts = {
 		name = bar_name,
 		type = "group",
@@ -162,7 +162,7 @@ function mod:GetBarOptions(bar_name)
 				type = "range",
 				order = 1,
 				min = 1,
-				max = 40,
+				max = max,
 				step = 1,
 			},
 			max_display = {
@@ -170,7 +170,7 @@ function mod:GetBarOptions(bar_name)
 				type = "range",
 				order = 2,
 				min = 1,
-				max = 40,
+				max = bar_max,
 				step = 1,
 			},
 			buffs_display = {
@@ -358,13 +358,13 @@ function mod:CreateIcon(filter, index)
 	f.bar = CreateFrame("StatusBar", nil, f)
 	f.bar:SetStatusBarTexture[[Interface\AddOns\fbngBuffFrame\white.tga]]
 	f.bar:SetOrientation("VERTICAL")
-	f.bar:SetStatusBarColor(1,0,0)
+	--f.bar:SetStatusBarColor(1,0,0)
 	f.bar:Show()
  
 	f.bar.bg = f.bar:CreateTexture(nil,"BACKGROUND")
 	f.bar.bg:SetTexture[[Interface\AddOns\fbngBuffFrame\white.tga]]
 	f.bar.bg:SetAllPoints(f.bar)  
-	f.bar.bg:SetVertexColor(0.4,0,0)
+	--f.bar.bg:SetVertexColor(0.4,0,0)
 	f:SetFrameStrata("HIGH")
 	f:SetFrameLevel(2)
 	
