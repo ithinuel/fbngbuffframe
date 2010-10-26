@@ -136,11 +136,21 @@ function mod:ColorSetter (info, r, g, b, a)
 end
 
 function mod:BuffOptionsGet(info)
-	return self.db.profile[info[1]][info[#info]]
+	local v
+	if info[#info] == "max_display" or info[#info] == "n_by_row" then
+		v = self.db.profile[info[1]][info[#info]] or defaults.profile[info[1]][info[#info]]
+	else
+		v = string.format( "%i", self.db.profile[info[1]][info[#info]] or defaults.profile[info[1]][info[#info]])
+	end
+	return v
 end
 function mod:BuffOptionsSet(info, value)
-	self.db.profile[info[1]][info[#info]] = value
-	self:ArrangeBuffs(info[1])
+	local v = math.floor( tonumber( value ) or 0 )
+	if v <= 0 then v = defaults.profile[info[1]][info[#info]] end
+	if self.db.profile[info[1]][info[#info]] ~= v then
+		self.db.profile[info[1]][info[#info]] = v
+		self:ArrangeBuffs(info[1])
+	end
 end
 
 function mod:GetBarOptions(bar_name, bar_max)
@@ -455,6 +465,8 @@ function mod:UpdateButton(f, count, expires, duration, color_high, color_med, co
 		g = color_low.g
 		b = color_low.b
 		a = color_low.a
+		f.bar:SetValue(0)
+		f.bar:SetMinMaxValues(0,1)
 		f.bar:SetStatusBarColor(r,g,b, a)
 		f.bar.bg:SetVertexColor(r/2,g/2,b/2, a)
 		f.timer:Hide()
