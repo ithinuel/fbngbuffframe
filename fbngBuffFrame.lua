@@ -499,7 +499,7 @@ function mod:UNIT_AURA(event, unit)
 	for i=1, DEBUFF_MAX_DISPLAY do
 		local f = self.debuffs[i]
 		
-		name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HARMFUL")
+		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HARMFUL")
 		if name == nil then
 			f:SetAlpha(0)
 		else
