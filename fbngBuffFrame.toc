@@ -1,9 +1,16 @@
 ## Interface: 40000
 ## Title: fbngBuffFrame
-## Notes: Aura frames
-## Author: Ljosalfar - EU.Conseil des ombres
+## Notes: Aura frames and weapon enchants replacement frame
+## Author: @project-author@
+## Version: @project-revision@
 ## SavedVariables: fBFDB
+## OptionalDeps: Ace3
 
+#@no-lib-strip@
 embeds.xml
+#@end-no-lib-strip@
+
+Locales\enUS.lua
 Locales\frFR.lua
+Locales\ruRU.lua
 fbngBuffFrame.lua
