@@ -500,7 +500,7 @@ function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_m
 	if not hasEnchant then
 		f.max = 0
 		f.prev = 0
-		f:SetAlpha(0)
+		f:Hide()
 		return
 	end
 	
@@ -515,8 +515,8 @@ function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_m
 		f.bar:SetMinMaxValues(0,expiration)
 	end
 	
-	if f:GetAlpha() == 0 then
-		f:SetAlpha(1)
+	if not f:IsShown() then
+		f:Show()
 	end
 	
 	f.prev = expiration
