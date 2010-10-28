@@ -436,8 +436,10 @@ function mod:CreateIcon(filter, index)
 		--f:SetAttribute("index", index)
 	
 		f:SetScript("OnEnter",function(self)
-			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-			GameTooltip:SetInventoryItem("player", self.id)
+			if self:GetAlpha() ~= 0 then
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+				GameTooltip:SetInventoryItem("player", self.id)
+			end
 		end)
 	else
 		f.filter = filter
@@ -497,16 +499,20 @@ function mod:OnUpdate()
 end
 function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_med, color_low)
 
+	if f.max == nil then f.max = 0 end
+	if f.prev == nil then f.prev = 0 end
+
 	if not hasEnchant then
-		f.max = 0
-		f.prev = 0
-		f:Hide()
+		if f.max ~= 0 then f.max = 0 end
+		if f.prev ~= 0 then f.prev = 0 end
+		if f:GetAlpha() ~= 0 then
+			f:SetAlpha(0)
+			f:EnableMouse(false)
+		end
 		return
 	end
 	
 	-- do stuff for wench
-	if f.max == nil then f.max = 0 end
-	if f.prev == nil then f.prev = 0 end
 	if f.prev == expiration then
 		return
 	elseif f.prev < expiration then
@@ -515,14 +521,15 @@ function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_m
 		f.bar:SetMinMaxValues(0,expiration)
 	end
 	
-	if not f:IsShown() then
-		f:Show()
+	if f:GetAlpha() == 0 then
+		f:SetAlpha(1)
+		f:EnableMouse(true)
 	end
 	
 	f.prev = expiration
 	f.bar:SetValue(expiration)
 	
-	f.icon:SetTexture(GetInventoryItemTexture("player", 16))
+	f.icon:SetTexture(GetInventoryItemTexture("player", f.id))
 	
 	f.timer:SetFormattedText(SecondsToTimeAbbrev(f.prev/1000));
 	
@@ -611,9 +618,15 @@ function mod:UNIT_AURA(event, unit)
 		
 		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HELPFUL")
 		if name == nil then
-			f:SetAlpha(0)
+			if f:GetAlpha() == 1 then
+				f:SetAlpha(0)
+				f:EnableMouse(false)
+			end
 		else
-			f:SetAlpha(1)
+			if f:GetAlpha() ~= 1 then
+				f:SetAlpha(1)
+				f:EnableMouse(true)
+			end
 			
 			if duration and duration ~= 0 then
 				f.bar:SetMinMaxValues(0,duration)
@@ -635,9 +648,15 @@ function mod:UNIT_AURA(event, unit)
 		
 		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HARMFUL")
 		if name == nil then
-			f:SetAlpha(0)
+			if f:GetAlpha() == 1 then
+				f:SetAlpha(0)
+				f:EnableMouse(false)
+			end
 		else
-			f:SetAlpha(1)
+			if f:GetAlpha() ~= 1 then
+				f:SetAlpha(1)
+				f:EnableMouse(true)
+			end
 			
 			if duration and duration ~= 0 then
 				f.bar:SetMinMaxValues(0,duration)
