@@ -33,6 +33,7 @@ local defaults = {
 				high = { r = 0, g = 1, b = 0, a = 1 },
 				med  = { r = 1, g = 1, b = 0, a = 1 },
 				low  = { r = 1, g = 0, b = 0, a = 1 },
+				none = { r = .5, g = 0, b = .5, a = 1 },
 			},
 			pos_x = UIParent:GetWidth()/2,
 			pos_y = UIParent:GetHeight()/2,
@@ -53,6 +54,7 @@ local defaults = {
 				high = { r = 1, g = 0, b = 0, a = 1 },
 				med  = { r = 1, g = 1, b = 0, a = 1 },
 				low  = { r = 0, g = 1, b = 0, a = 1 },
+				none = { r = .5, g = 0, b = .5, a = 1 },
 			},
 			pos_x = UIParent:GetWidth()/2,
 			pos_y = UIParent:GetHeight()/2,
@@ -73,6 +75,7 @@ local defaults = {
 				high = { r = 0, g = 1, b = 0, a = 1 },
 				med  = { r = 1, g = 1, b = 0, a = 1 },
 				low  = { r = 1, g = 0, b = 0, a = 1 },
+				none = { r = .5, g = 0, b = .5, a = 1 },
 			},
 			pos_x = UIParent:GetWidth()/2,
 			pos_y = UIParent:GetHeight()/2,
@@ -132,10 +135,10 @@ function mod:OnInitialize()
 end
 
 function mod:OptionsGet(info)
-	return self.db.profile[info[#info]]
+	return self.db.profile[info[#info]] or defaults.profile[info[#info]]
 end
 function mod:OptionsSet(info, value)
-	self.db.profile[info[#info]] = value
+	self.db.profile[info[#info]] = value or defaults.profile[info[#info]]
 	self:UpdateConf()
 end
 
@@ -241,6 +244,12 @@ function mod:GetBarOptions(bar_name, bar_max, iswench)
 							low = {
 								type = 'color',
 								name = L["Low"],
+								order = 3,
+								hasAlpha = true,
+							},
+							none = {
+								type = 'color',
+								name = L["None"],
 								order = 3,
 								hasAlpha = true,
 							},
@@ -373,11 +382,11 @@ function mod:CreateAnchor(pos_storage)
 end
 function mod:CreateIcon(filter, index)
 	local f
-	if filter == "wench" then
-		f = CreateFrame("Button", nil, UIParent)
-	else
+	--if filter == "wench" then
+	--	f = CreateFrame("Button", nil, UIParent)
+	--else
 		f = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
-	end
+	--end
 	f:SetBackdrop({
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", tile = true, tileSize = 0,
 		insets = {left = 0, right = 0, top = 0, bottom = 0},
@@ -416,12 +425,18 @@ function mod:CreateIcon(filter, index)
 	f:SetFrameStrata("HIGH")
 	f:SetFrameLevel(2)
 	
+	f:EnableMouse(true)
 	if filter == "HELPFUL" then
 		f:RegisterForClicks("RightButtonUp")
 		-- Setup stuff for clicking off buffs
 		f:SetAttribute("type", "cancelaura" )
 		f:SetAttribute("unit", "player")
 		f:SetAttribute("index", index)
+	elseif filter == "wench" then
+		f:RegisterForClicks("RightButtonUp")
+		-- Setup stuff for clicking off buffs
+		f:SetAttribute("type", "click" )
+		f:SetAttribute("clickbutton", "TempEnchant".. (index-15))	
 	end
 	
 	f.id = index
@@ -444,6 +459,7 @@ function mod:CreateIcon(filter, index)
 	else
 		f.filter = filter
 		f:SetScript("OnEnter",function(self)
+			--mod:Print(self.filter, " : " , self.id);
 			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT");
 			GameTooltip:SetFrameLevel(self:GetFrameLevel() + 2);
 			GameTooltip:SetUnitAura("player", self.id, self.filter);
@@ -464,27 +480,30 @@ function mod:OnUpdate()
 	local buf_high = self.db.profile.buffs.colors.high
 	local buf_med = self.db.profile.buffs.colors.med
 	local buf_low = self.db.profile.buffs.colors.low
+	local buf_none = self.db.profile.buffs.colors.none
 	
 	local debuf_high = self.db.profile.debuffs.colors.high
 	local debuf_med = self.db.profile.debuffs.colors.med
 	local debuf_low = self.db.profile.debuffs.colors.low
+	local debuf_none = self.db.profile.debuffs.colors.none
 	
 	local wench_high = self.db.profile.wench.colors.high
 	local wench_med = self.db.profile.wench.colors.med
 	local wench_low = self.db.profile.wench.colors.low
+	local wench_none = self.db.profile.wench.colors.none
 	
 	for i = 1, self.db.profile.buffs.max_display do
 		local f = self.buffs[i]
 		if f:GetAlpha() ~= 0 then
 			local name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HELPFUL")
-			self:UpdateButton(f, count, expires, duration, buf_high, buf_med, buf_low)
+			self:UpdateButton(f, count, expires, duration, buf_high, buf_med, buf_low, buf_none)
 		end
 	end
 	for i = 1, self.db.profile.debuffs.max_display do
 		local f = self.debuffs[i]
 		if f:GetAlpha() ~= 0 then
 			local name, rank, icon, count, dispelType, duration, expires = UnitAura("player",i,"HARMFUL")
-			self:UpdateButton(f, count, expires, duration, debuf_high, debuf_med, debuf_low)
+			self:UpdateButton(f, count, expires, duration, debuf_high, debuf_med, debuf_low, debuf_none)
 		end
 	end
 	
@@ -492,12 +511,12 @@ function mod:OnUpdate()
 		hasOffHandEnchant, offHandExpiration, offHandCharges,
 		hasThrownEnchant, thrownExpiration, thrownCharges = GetWeaponEnchantInfo();
 
-	self:UpdateWench(self.wench[1], hasMainHandEnchant, mainHandExpiration, mainHandCharges, wench_high, wench_med, wench_low);
-	self:UpdateWench(self.wench[2], hasOffHandEnchant, offHandExpiration, offHandCharges, wench_high, wench_med, wench_low);
-	self:UpdateWench(self.wench[3], hasThrownEnchant, thrownExpiration, thrownCharges, wench_high, wench_med, wench_low);
+	self:UpdateWench(self.wench[1], hasMainHandEnchant, mainHandExpiration, mainHandCharges, wench_high, wench_med, wench_low, wench_none);
+	self:UpdateWench(self.wench[2], hasOffHandEnchant, offHandExpiration, offHandCharges, wench_high, wench_med, wench_low, wench_none);
+	self:UpdateWench(self.wench[3], hasThrownEnchant, thrownExpiration, thrownCharges, wench_high, wench_med, wench_low, wench_none);
 
 end
-function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_med, color_low)
+function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_med, color_low, color_none)
 
 	if f.max == nil then f.max = 0 end
 	if f.prev == nil then f.prev = 0 end
@@ -557,7 +576,7 @@ function mod:UpdateWench(f, hasEnchant, expiration, charges, color_high, color_m
 		f.count:Hide()
 	end
 end
-function mod:UpdateButton(f, count, expires, duration, color_high, color_med, color_low)
+function mod:UpdateButton(f, count, expires, duration, color_high, color_med, color_low, color_none)
 	local r, g, b, a
 	if expires and expires ~= 0 then
 		local left = expires-GetTime()
@@ -590,10 +609,10 @@ function mod:UpdateButton(f, count, expires, duration, color_high, color_med, co
 			f.bar.bg:SetVertexColor(r/2,g/2,b/2, a)
 		end
 	else
-		r = color_low.r
-		g = color_low.g
-		b = color_low.b
-		a = color_low.a
+		r = color_none.r
+		g = color_none.g
+		b = color_none.b
+		a = color_none.a
 		f.bar:SetValue(0)
 		f.bar:SetMinMaxValues(0,1)
 		f.bar:SetStatusBarColor(r,g,b, a)
@@ -616,60 +635,15 @@ function mod:UNIT_AURA(event, unit)
 	for i=1, BUFF_MAX_DISPLAY do
 		local f = self.buffs[i]
 		
-		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HELPFUL")
-		if name == nil then
-			if f:GetAlpha() == 1 then
-				f:SetAlpha(0)
-				f:EnableMouse(false)
-			end
-		else
-			if f:GetAlpha() ~= 1 then
-				f:SetAlpha(1)
-				f:EnableMouse(true)
-			end
-			
-			if duration and duration ~= 0 then
-				f.bar:SetMinMaxValues(0,duration)
-			else
-				f.bar:SetValue(0)
-				f.bar:SetMinMaxValues(0,1)
-			end
-			
-			if count and count > 1 then
-				f.count:Show()
-			else
-				f.count:Hide()
-			end
-			f.icon:SetTexture(icon)
-		end
+		name, rank, icon, count, debuffType, duration = UnitAura("player",i,"HELPFUL")
+		self:OnUnitAura(f, name, duration, count, icon);
 	end
 	for i=1, DEBUFF_MAX_DISPLAY do
 		local f = self.debuffs[i]
 		
-		name, rank, icon, count, debuffType, duration, expires = UnitAura("player",i,"HARMFUL")
-		if name == nil then
-			if f:GetAlpha() == 1 then
-				f:SetAlpha(0)
-				f:EnableMouse(false)
-			end
-		else
-			if f:GetAlpha() ~= 1 then
-				f:SetAlpha(1)
-				f:EnableMouse(true)
-			end
-			
-			if duration and duration ~= 0 then
-				f.bar:SetMinMaxValues(0,duration)
-			else
-				f.bar:SetValue(0)
-				f.bar:SetMinMaxValues(0,1)
-			end
-			
-			if count and count > 1 then
-				f.count:Show()
-			end
-			f.icon:SetTexture(icon)
-		end
+		name, rank, icon, count, debuffType, duration = UnitAura("player",i,"HARMFUL")
+		
+		self:OnUnitAura(f, name, duration, count, icon);
 	
 		local color
 		if ( debuffType ) then
@@ -680,6 +654,32 @@ function mod:UNIT_AURA(event, unit)
 		f:SetBackdropColor(color.r, color.g, color.b, color.a)
 	end
 	self:OnUpdate()
+end
+
+function mod:OnUnitAura(f, name, duration, count, icon)
+	if name == nil then
+		if f:GetAlpha() == 1 then
+			f:SetAlpha(0)
+			--f:EnableMouse(false)
+		end
+	else
+		if f:GetAlpha() ~= 1 then
+			f:SetAlpha(1)
+			--f:EnableMouse(true)
+		end
+		
+		if duration and duration ~= 0 then
+			f.bar:SetMinMaxValues(0,duration)
+		else
+			f.bar:SetValue(0)
+			f.bar:SetMinMaxValues(0,1)
+		end
+		
+		if count and count > 1 then
+			f.count:Show()
+		end
+		f.icon:SetTexture(icon)
+	end
 end
 
 function mod:ArrangeBuffs(bar)

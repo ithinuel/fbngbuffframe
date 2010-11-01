@@ -23,3 +23,4 @@ L["Show Blizzard Frame"] = true;
 L["Stack counter size"] = true;
 L["Status bar width"] = true;
 L["Wench"] = "Weapon Enchants";
+L["None"] = "Without delay";
