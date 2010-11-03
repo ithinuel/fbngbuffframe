@@ -10,7 +10,8 @@
 embeds.xml
 #@end-no-lib-strip@
 
-Locales\enUS.lua
-Locales\frFR.lua
-Locales\ruRU.lua
+locales\enUS.lua
+locales\frFR.lua
+locales\ruRU.lua
+locales\zhTW.lua
 fbngBuffFrame.lua
