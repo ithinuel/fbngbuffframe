@@ -291,15 +291,14 @@ end
 
 function mod:UpdateConf()
         if self.db.profile.showblizz then
-		if not BuffFrame:IsShown() then
-			BuffFrame:RegisterEvent("UNIT_AURA")
-			BuffFrame:Show()
-		end
-		if not TemporaryEnchantFrame:IsShown() then
-			TemporaryEnchantFrame:Show()
-		end
+		BuffFrame:RegisterEvent("UNIT_AURA")
+		BuffFrame:Show()
+		ConsolidatedBuffs:Show()
+		TemporaryEnchantFrame:Show()
+		BuffFrame_Update()
 	else
             BuffFrame:Hide()
+	    ConsolidatedBuffs:Hide()
             BuffFrame:UnregisterEvent("UNIT_AURA")
             TemporaryEnchantFrame:Hide()
         end
