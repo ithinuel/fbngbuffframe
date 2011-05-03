@@ -290,18 +290,16 @@ function mod:ToggleAnchor(info, value)
 end
 
 function mod:UpdateConf()
-        if self.db.profile.showblizz then
+		if self.db.profile.showblizz then
 		BuffFrame:RegisterEvent("UNIT_AURA")
 		BuffFrame:Show()
-		ConsolidatedBuffs:Show()
 		TemporaryEnchantFrame:Show()
 		BuffFrame_Update()
 	else
-            BuffFrame:Hide()
-	    ConsolidatedBuffs:Hide()
-            BuffFrame:UnregisterEvent("UNIT_AURA")
-            TemporaryEnchantFrame:Hide()
-        end
+		BuffFrame:Hide()
+		BuffFrame:UnregisterEvent("UNIT_AURA")
+		TemporaryEnchantFrame:Hide()
+		end
 end
 
 function mod:CommandParser()
