@@ -28,6 +28,7 @@ local defaults = {
 			count_size = 13,
 			timer_size = 10,
 			padding = 3,
+			growth_to = "left",
 			
 			colors = {
 				high = { r = 0, g = 1, b = 0, a = 1 },
@@ -49,6 +50,7 @@ local defaults = {
 			count_size = 13,
 			timer_size = 10,
 			padding = 3,
+			growth_to = "left",
 			
 			colors = {
 				high = { r = 1, g = 0, b = 0, a = 1 },
@@ -70,6 +72,7 @@ local defaults = {
 			count_size = 13,
 			timer_size = 10,
 			padding = 3,
+			growth_to = "left",
 			
 			colors = {
 				high = { r = 0, g = 1, b = 0, a = 1 },
@@ -160,7 +163,7 @@ end
 
 function mod:BuffOptionsGet(info)
 	local v
-	if info[#info] == "max_display" or info[#info] == "n_by_row" then
+	if info[#info] == "max_display" or info[#info] == "n_by_row" or info[#info] == "growth_to" then
 		v = self.db.profile[info[1]][info[#info]] or defaults.profile[info[1]][info[#info]]
 	else
 		v = string.format( "%i", self.db.profile[info[1]][info[#info]] or defaults.profile[info[1]][info[#info]])
@@ -168,8 +171,13 @@ function mod:BuffOptionsGet(info)
 	return v
 end
 function mod:BuffOptionsSet(info, value)
-	local v = math.floor( tonumber( value ) or 0 )
-	if v <= 0 then v = defaults.profile[info[1]][info[#info]] end
+	local v = nil
+	if (type(value) ~= "string") then
+		v = math.floor( tonumber( value ) or 0 )
+		if v <= 0 then v = defaults.profile[info[1]][info[#info]] end
+	else
+		v = value
+	end
 	if self.db.profile[info[1]][info[#info]] ~= v then
 		self.db.profile[info[1]][info[#info]] = v
 		self:ArrangeBuffs(info[1])
@@ -221,10 +229,19 @@ function mod:GetBarOptions(bar_name, bar_max, iswench)
 						type = "input",
 						order = 4,
 					},
+					growth_to = {
+						name = L["Growth to "],
+						type = "select",
+						order = 5,
+						values = {
+							left = L["left"],
+							right = L["right"],
+						},
+					},
 					colors = {
 						type = 'group',
 						name = L["Left time"],
-						order = 5,
+						order = 6,
 						get = "ColorGetter",
 						set = "ColorSetter",
 						guiInline  = true,
@@ -697,6 +714,10 @@ function mod:ArrangeBuffs(bar)
 	local t_size = self.db.profile[bar].timer_size
 	local pad = self.db.profile[bar].padding
 	local sb_width = self.db.profile[bar].status_bar_width
+	local growth_dir = -1;
+	if  self.db.profile[bar].growth_to == "right" then
+		growth_dir = 1;
+	end
 	local bar_width = pad + sb_width + pad + i_size + pad
 	local bar_height = pad + i_size + pad
 	
@@ -706,7 +727,7 @@ function mod:ArrangeBuffs(bar)
 	for i = 1, max do
 		local b = self[bar][i]
 		local step_y = 0
-		local step_x = -bar_width
+		local step_x = growth_dir * bar_width
 		if (i % n_by_row) == 1 then
 			prev = self[bar .. "_anchor"]
 			step_y = -(bar_height + pad + t_size + pad)* ((i-1) / n_by_row)

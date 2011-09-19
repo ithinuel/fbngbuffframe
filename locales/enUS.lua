@@ -24,3 +24,5 @@ L["Stack counter size"] = true;
 L["Status bar width"] = true;
 L["Wench"] = "Weapon Enchants";
 L["None"] = "Without delay";
+L["left"] = true;
+L["right"] = true;
