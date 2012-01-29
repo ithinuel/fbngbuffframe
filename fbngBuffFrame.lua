@@ -230,7 +230,7 @@ function mod:GetBarOptions(bar_name, bar_max, iswench)
 						order = 4,
 					},
 					growth_to = {
-						name = L["Growth to "],
+						name = L["growth_to"],
 						type = "select",
 						order = 5,
 						values = {
