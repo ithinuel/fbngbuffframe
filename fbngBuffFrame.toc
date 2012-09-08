@@ -1,4 +1,4 @@
-## Interface: 40300
+## Interface: 50001
 ## Title: fbngBuffFrame
 ## Notes: Aura frames and weapon enchants replacement frame
 ## Author: @project-author@
